@@ -1,0 +1,101 @@
+========================================================================
+   REPORTE COMPLETO - SISTEMA DE GESTION DE CONTAMINACION DEL AIRE
+========================================================================
+
+--- ZONAS REGISTRADAS ---
+
+Zona ID 1: Machachi
+  CO2: 450.00 ppm | SO2: 23.00 ug/m3
+  NO2: 42.00 ug/m3 | PM2.5: 28.00 ug/m3
+
+Zona ID 2: Conocoto
+  CO2: 480.00 ppm | SO2: 25.00 ug/m3
+  NO2: 48.00 ug/m3 | PM2.5: 32.00 ug/m3
+
+Zona ID 3: Alangasi
+  CO2: 440.00 ppm | SO2: 22.00 ug/m3
+  NO2: 44.00 ug/m3 | PM2.5: 29.00 ug/m3
+
+Zona ID 4: Manta
+  CO2: 425.00 ppm | SO2: 28.00 ug/m3
+  NO2: 46.00 ug/m3 | PM2.5: 30.00 ug/m3
+
+Zona ID 5: Latacunga
+  CO2: 465.00 ppm | SO2: 27.00 ug/m3
+  NO2: 49.00 ug/m3 | PM2.5: 33.00 ug/m3
+
+Zona ID 6: Tena
+  CO2: 425.00 ppm | SO2: 22.00 ug/m3
+  NO2: 35.00 ug/m3 | PM2.5: 28.00 ug/m3
+
+Zona ID 7: Alogincho
+  CO2: 385.00 ppm | SO2: 35.00 ug/m3
+  NO2: 450.00 ug/m3 | PM2.5: 450.00 ug/m3
+
+
+--- HISTORIAL DE REGISTROS ---
+
+Fecha: lunes, 13/01/2026 | Zona: Machachi
+CO2: 380.00 | SO2: 8.50 | NO2: 18.00 | PM2.5: 12.00
+
+Fecha: martes, 14/01/2026 | Zona: Machachi
+CO2: 420.00 | SO2: 16.00 | NO2: 35.00 | PM2.5: 22.00
+
+Fecha: miercoles, 15/01/202 | Zona: Machachi
+CO2: 450.00 | SO2: 23.00 | NO2: 42.00 | PM2.5: 28.00
+
+Fecha: lunes, 13/01/2026 | Zona: Conocoto
+CO2: 395.00 | SO2: 12.00 | NO2: 22.50 | PM2.5: 16.00
+
+Fecha: martes, 14/01/2026 | Zona: Conocoto
+CO2: 430.00 | SO2: 19.00 | NO2: 45.00 | PM2.5: 27.00
+
+Fecha: miercoles, 15/01/202 | Zona: Conocoto
+CO2: 480.00 | SO2: 25.00 | NO2: 48.00 | PM2.5: 32.00
+
+Fecha: lunes, 13/01/2026 | Zona: Alangasi
+CO2: 385.00 | SO2: 10.00 | NO2: 20.00 | PM2.5: 14.50
+
+Fecha: martes, 14/01/2026 | Zona: Alangasi
+CO2: 410.00 | SO2: 18.00 | NO2: 38.00 | PM2.5: 24.00
+
+Fecha: miercoles, 15/01/202 | Zona: Alangasi
+CO2: 440.00 | SO2: 22.00 | NO2: 44.00 | PM2.5: 29.00
+
+Fecha: lunes, 13/01/2026 | Zona: Manta
+CO2: 370.00 | SO2: 15.00 | NO2: 25.00 | PM2.5: 18.00
+
+Fecha: martes, 14/01/2026 | Zona: Manta
+CO2: 405.00 | SO2: 24.00 | NO2: 41.00 | PM2.5: 26.00
+
+Fecha: miercoles, 15/01/202 | Zona: Manta
+CO2: 425.00 | SO2: 28.00 | NO2: 46.00 | PM2.5: 30.00
+
+Fecha: lunes, 13/01/2026 | Zona: Latacunga
+CO2: 390.00 | SO2: 11.00 | NO2: 24.00 | PM2.5: 15.50
+
+Fecha: martes, 14/01/2025 | Zona: Latacunga
+CO2: 435.00 | SO2: 24.00 | NO2: 43.00 | PM2.5: 26.50
+
+Fecha: miercoles, 15/01/202 | Zona: Latacunga
+CO2: 465.00 | SO2: 27.00 | NO2: 49.00 | PM2.5: 33.00
+
+Fecha: jueves, 16/01/2026 | Zona: Tena
+CO2: 360.00 | SO2: 5.00 | NO2: 8.00 | PM2.5: 10.00
+
+Fecha: viernes, 17/01/2026 | Zona: Tena
+CO2: 390.00 | SO2: 12.00 | NO2: 18.00 | PM2.5: 16.00
+
+Fecha: sabado, 18/01/2026 | Zona: Tena
+CO2: 425.00 | SO2: 22.00 | NO2: 35.00 | PM2.5: 28.00
+
+Fecha: sabado, 18/01/2026 | Zona: Alogincho
+CO2: 235.00 | SO2: 75.00 | NO2: 100.00 | PM2.5: 385.00
+
+Fecha: domingo, 19/01/2026 | Zona: Alogincho
+CO2: 385.00 | SO2: 35.00 | NO2: 450.00 | PM2.5: 450.00
+
+
+========================================================================
+Limites OMS: CO2=400 | SO2=20 | NO2=40 | PM2.5=25
+========================================================================
