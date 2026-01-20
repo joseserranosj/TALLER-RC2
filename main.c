@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
+
 #include <ctype.h>
 #include "funciones.h"
 // FUNCION PRINCIPAL
@@ -66,4 +66,5 @@ int main() {
     
     return 0;
 }
+
 
