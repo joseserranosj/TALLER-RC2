@@ -1,7 +1,7 @@
 #include "funciones.h"
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
+
 #include <ctype.h>
 
 // FUNCION SALTO DE LINEA
@@ -1299,3 +1299,4 @@ void exportarReporte() {
     fclose(archivo_salida);
     printf("\n*** Reporte exportado exitosamente en 'reporte_completo.txt' ***\n");
 }
+
