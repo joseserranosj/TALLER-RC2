@@ -589,10 +589,41 @@ void calcularPromediosHistoricos() {
     FILE *archivo;
     RegistroDiario registros[1000];
     PromedioHistorico promedios[MAX_ZONAS];
+    DatosZona zonas[MAX_ZONAS];
     int totalRegistros = 0;
-    int i, j, numPromedios = 0;
+    int i, j, numPromedios = 0, numZonas = 0;
     
     printf("\n--- Promedios Historicos (Ultimos 30 Dias) ---\n");
+    
+    // Cargar zonas
+    archivo = fopen("zonas.dat", "rb");
+    if(archivo == NULL) {
+        printf("No hay zonas registradas.\n");
+        return;
+    }
+    fread(&numZonas, sizeof(int), 1, archivo);
+    for(i = 0; i < numZonas; i++) {
+        fread(&zonas[i], sizeof(DatosZona), 1, archivo);
+    }
+    fclose(archivo);
+    
+    if(numZonas == 0) {
+        printf("No hay zonas registradas.\n");
+        return;
+    }
+    
+    // Mostrar menú de zonas
+    printf("\n--- Seleccionar Zona para Ver Promedios ---\n");
+    printf("========================================================================\n");
+    for(i = 0; i < numZonas; i++) {
+        printf("%d) %s (ID: %d)\n", i + 1, zonas[i].nombre, zonas[i].id);
+    }
+    printf("========================================================================\n");
+    
+    int opcionZona = validarEntero("Selecciona el numero de la zona: ", 1, numZonas);
+    int indiceZona = opcionZona - 1;
+    char zonaSeleccionada[50];
+    strcpy(zonaSeleccionada, zonas[indiceZona].nombre);
     
     archivo = fopen("historial.dat", "rb");
     if(archivo == NULL) {
@@ -611,72 +642,50 @@ void calcularPromediosHistoricos() {
         return;
     }
     
+    // Calcular promedios solo para la zona seleccionada
+    float suma_co2 = 0, suma_so2 = 0, suma_no2 = 0, suma_pm25 = 0;
+    int dias_analizados = 0;
+    
     for(i = 0; i < totalRegistros && i < DIAS_HISTORICOS; i++) {
-        int encontrado = 0;
-        for(j = 0; j < numPromedios; j++) {
-            if(strcmp(promedios[j].nombre_zona, registros[i].zona.nombre) == 0) {
-                promedios[j].promedio_co2 += registros[i].zona.co2;
-                promedios[j].promedio_so2 += registros[i].zona.so2;
-                promedios[j].promedio_no2 += registros[i].zona.no2;
-                promedios[j].promedio_pm25 += registros[i].zona.pm25;
-                promedios[j].dias_analizados++;
-                encontrado = 1;
-                break;
-            }
-        }
-        
-        if(!encontrado) {
-            strcpy(promedios[numPromedios].nombre_zona, registros[i].zona.nombre);
-            promedios[numPromedios].promedio_co2 = registros[i].zona.co2;
-            promedios[numPromedios].promedio_so2 = registros[i].zona.so2;
-            promedios[numPromedios].promedio_no2 = registros[i].zona.no2;
-            promedios[numPromedios].promedio_pm25 = registros[i].zona.pm25;
-            promedios[numPromedios].dias_analizados = 1;
-            numPromedios++;
+        if(strcmp(registros[i].zona.nombre, zonaSeleccionada) == 0) {
+            suma_co2 += registros[i].zona.co2;
+            suma_so2 += registros[i].zona.so2;
+            suma_no2 += registros[i].zona.no2;
+            suma_pm25 += registros[i].zona.pm25;
+            dias_analizados++;
         }
     }
     
-    for(i = 0; i < numPromedios; i++) {
-        if(promedios[i].dias_analizados > 0) {
-            promedios[i].promedio_co2 /= promedios[i].dias_analizados;
-            promedios[i].promedio_so2 /= promedios[i].dias_analizados;
-            promedios[i].promedio_no2 /= promedios[i].dias_analizados;
-            promedios[i].promedio_pm25 /= promedios[i].dias_analizados;
-            
-            promedios[i].excede_co2 = (promedios[i].promedio_co2 > LIMITE_CO2);
-            promedios[i].excede_so2 = (promedios[i].promedio_so2 > LIMITE_SO2);
-            promedios[i].excede_no2 = (promedios[i].promedio_no2 > LIMITE_NO2);
-            promedios[i].excede_pm25 = (promedios[i].promedio_pm25 > LIMITE_PM25);
-        }
-    }
-    
-    archivo = fopen("promedios.dat", "wb");
-    if(archivo != NULL) {
-        fwrite(&numPromedios, sizeof(int), 1, archivo);
-        for(i = 0; i < numPromedios; i++) {
-            fwrite(&promedios[i], sizeof(PromedioHistorico), 1, archivo);
-        }
-        fclose(archivo);
-    }
-    
-    printf("\nDatos analizados: %d registros\n", totalRegistros < DIAS_HISTORICOS ? totalRegistros : DIAS_HISTORICOS);
+    printf("\nDatos analizados: %d registros para %s\n", dias_analizados, zonaSeleccionada);
     printf("========================================================================\n");
     
-    for(i = 0; i < numPromedios; i++) {
-        printf("\n[%s] - %d dias\n", promedios[i].nombre_zona, promedios[i].dias_analizados);
+    if(dias_analizados > 0) {
+        float prom_co2 = suma_co2 / dias_analizados;
+        float prom_so2 = suma_so2 / dias_analizados;
+        float prom_no2 = suma_no2 / dias_analizados;
+        float prom_pm25 = suma_pm25 / dias_analizados;
+        
+        int excede_co2 = (prom_co2 > LIMITE_CO2);
+        int excede_so2 = (prom_so2 > LIMITE_SO2);
+        int excede_no2 = (prom_no2 > LIMITE_NO2);
+        int excede_pm25 = (prom_pm25 > LIMITE_PM25);
+        
+        printf("\n[%s] - %d dias\n", zonaSeleccionada, dias_analizados);
         printf("------------------------------------------------------------------------\n");
         printf("  CO2:   %.2f ppm   [Limite: %.0f] %s\n", 
-               promedios[i].promedio_co2, LIMITE_CO2, 
-               promedios[i].excede_co2 ? "[EXCEDE, En los ultimos 30 dias se ha excedido el limite de CO2]" : "[CO2 ESTABLE]");
+               prom_co2, LIMITE_CO2, 
+               excede_co2 ? "[EXCEDE, En los ultimos 30 dias se ha excedido el limite de CO2]" : "[CO2 ESTABLE]");
         printf("  SO2:   %.2f ug/m3 [Limite: %.0f] %s\n", 
-               promedios[i].promedio_so2, LIMITE_SO2,
-               promedios[i].excede_so2 ? "[EXCEDE, En los ultimos 30 dias se ha excedido el limite de SO2]" : "[SO2 ESTABLE]");
+               prom_so2, LIMITE_SO2,
+               excede_so2 ? "[EXCEDE, En los ultimos 30 dias se ha excedido el limite de SO2]" : "[SO2 ESTABLE]");
         printf("  NO2:   %.2f ug/m3 [Limite: %.0f] %s\n", 
-               promedios[i].promedio_no2, LIMITE_NO2,
-               promedios[i].excede_no2 ? "[EXCEDE, En los ultimos 30 dias se ha excedido el limite de NO2]" : "[NO2 ESTABLE]");
+               prom_no2, LIMITE_NO2,
+               excede_no2 ? "[EXCEDE, En los ultimos 30 dias se ha excedido el limite de NO2]" : "[NO2 ESTABLE]");
         printf("  PM2.5: %.2f ug/m3 [Limite: %.0f] %s\n", 
-               promedios[i].promedio_pm25, LIMITE_PM25,
-               promedios[i].excede_pm25 ? "[EXCEDE, En los ultimos 30 dias se ha excedido el limite de PM2.5]" : "[PM2.5 ESTABLE]");
+               prom_pm25, LIMITE_PM25,
+               excede_pm25 ? "[EXCEDE, En los ultimos 30 dias se ha excedido el limite de PM2.5]" : "[PM2.5 ESTABLE]");
+    } else {
+        printf("No hay registros para esta zona en el historial.\n");
     }
     printf("\n========================================================================\n");
 }
@@ -685,13 +694,10 @@ void calcularPromediosHistoricos() {
 void predecirNivelesFuturos() {
     FILE *archivo;
     RegistroDiario registros[100];
-    Prediccion predicciones[MAX_ZONAS];
     DatosZona zonas[MAX_ZONAS];
     int totalRegistros = 0;
     int numZonas = 0;
-    int i, j, numPredicciones = 0;
-    int dia_actual, dia_siguiente;
-    char dia_nombre_siguiente[20];
+    int i, j, k;
     
     printf("\n--- Prediccion de Niveles Futuros (24 Horas) ---\n");
     
@@ -706,6 +712,11 @@ void predecirNivelesFuturos() {
         fread(&zonas[i], sizeof(DatosZona), 1, archivo);
     }
     fclose(archivo);
+    
+    if(numZonas == 0) {
+        printf("No hay zonas registradas.\n");
+        return;
+    }
     
     // Cargar historial
     archivo = fopen("historial.dat", "rb");
@@ -725,97 +736,99 @@ void predecirNivelesFuturos() {
         return;
     }
     
+    // Mostrar menú de zonas
+    printf("\n--- Seleccionar Zona para Prediccion ---\n");
+    printf("========================================================================\n");
+    for(i = 0; i < numZonas; i++) {
+        printf("%d) %s (ID: %d)\n", i + 1, zonas[i].nombre, zonas[i].id);
+    }
+    printf("========================================================================\n");
+    
+    int opcionZona = validarEntero("Selecciona el numero de la zona: ", 1, numZonas);
+    int indiceZona = opcionZona - 1;
+    char zonaSeleccionada[50];
+    strcpy(zonaSeleccionada, zonas[indiceZona].nombre);
+    
     printf("\nAlgoritmo: Promedio ponderado con factores climaticos\n");
     printf("Registros analizados: %d\n", totalRegistros);
     printf("========================================================================\n\n");
     
-    // ...resto del código igual...
+    float sum_co2 = 0, sum_so2 = 0, sum_no2 = 0, sum_pm25 = 0;
+    float peso_total = 0;
+    int registros_zona = 0;
+    int dia_actual_zona = -1;
+    char dia_nombre_siguiente_zona[20];
     
-    for(i = 0; i < numZonas; i++) {
-        float sum_co2 = 0, sum_so2 = 0, sum_no2 = 0, sum_pm25 = 0;
-        float peso_total = 0;
-        int registros_zona = 0;
-        int dia_actual_zona = -1;
-        char dia_nombre_siguiente_zona[20];
-        
-        // OBTENER ULTIMO REGISTRO DE ESTA ZONA ESPECIFICA
-        for(j = totalRegistros - 1; j >= 0; j--) {
-            if(strcmp(registros[j].zona.nombre, zonas[i].nombre) == 0) {
-                // Extraer el dia de la semana del ultimo registro de esta zona
-                char dia_ultimo_zona[20];
-                sscanf(registros[j].fecha, "%[^,]", dia_ultimo_zona);
-                
-                // Convertir a minusculas
-                int k;
-                for(k = 0; dia_ultimo_zona[k]; k++) {
-                    dia_ultimo_zona[k] = tolower(dia_ultimo_zona[k]);
-                }
-                
-                // Encontrar posicion del dia
-                const char* dias_validos[] = {"lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"};
-                const char* dias_nombres[] = {"Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"};
-                
-                for(k = 0; k < 7; k++) {
-                    if(strcmp(dia_ultimo_zona, dias_validos[k]) == 0) {
-                        dia_actual_zona = k;
-                        break;
-                    }
-                }
-                
-                if(dia_actual_zona != -1) {
-                    int dia_siguiente_zona = (dia_actual_zona + 1) % 7;
-                    strcpy(dia_nombre_siguiente_zona, dias_nombres[dia_siguiente_zona]);
-                }
-                break;
+    // OBTENER ULTIMO REGISTRO DE ESTA ZONA ESPECIFICA
+    for(j = totalRegistros - 1; j >= 0; j--) {
+        if(strcmp(registros[j].zona.nombre, zonaSeleccionada) == 0) {
+            // Extraer el dia de la semana del ultimo registro de esta zona
+            char dia_ultimo_zona[20];
+            sscanf(registros[j].fecha, "%[^,]", dia_ultimo_zona);
+            
+            // Convertir a minusculas
+            int k;
+            for(k = 0; dia_ultimo_zona[k]; k++) {
+                dia_ultimo_zona[k] = tolower(dia_ultimo_zona[k]);
             }
-        }
-        
-        // Si no hay registros para esta zona, continuar con la siguiente
-        if(dia_actual_zona == -1) {
-            continue;
-        }
-        
-        for(j = totalRegistros - 1; j >= 0 && registros_zona < 10; j--) {
-            if(strcmp(registros[j].zona.nombre, zonas[i].nombre) == 0) {
-                float peso = (float)(10 - registros_zona) / 10.0;
-                peso_total += peso;
-                
-                sum_co2 += registros[j].zona.co2 * peso;
-                sum_so2 += registros[j].zona.so2 * peso;
-                sum_no2 += registros[j].zona.no2 * peso;
-                sum_pm25 += registros[j].zona.pm25 * peso;
-                registros_zona++;
+            
+            // Encontrar posicion del dia
+            const char* dias_validos[] = {"lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"};
+            const char* dias_nombres[] = {"Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"};
+            
+            for(k = 0; k < 7; k++) {
+                if(strcmp(dia_ultimo_zona, dias_validos[k]) == 0) {
+                    dia_actual_zona = k;
+                    break;
+                }
             }
-        }
-        
-        if(registros_zona > 0 && peso_total > 0) {
-            strcpy(predicciones[numPredicciones].nombre_zona, zonas[i].nombre);
-            predicciones[numPredicciones].co2_pred = sum_co2 / peso_total;
-            predicciones[numPredicciones].so2_pred = sum_so2 / peso_total;
-            predicciones[numPredicciones].no2_pred = sum_no2 / peso_total;
-            predicciones[numPredicciones].pm25_pred = sum_pm25 / peso_total;
             
-            int excede_count = 0;
-            if(predicciones[numPredicciones].co2_pred > LIMITE_CO2) excede_count++;
-            if(predicciones[numPredicciones].so2_pred > LIMITE_SO2) excede_count++;
-            if(predicciones[numPredicciones].no2_pred > LIMITE_NO2) excede_count++;
-            if(predicciones[numPredicciones].pm25_pred > LIMITE_PM25) excede_count++;
-            
-            predicciones[numPredicciones].nivel_alerta = excede_count;
-            sprintf(predicciones[numPredicciones].fecha_prediccion, "Manana (%s)", dia_nombre_siguiente_zona);
-            
-            numPredicciones++;
+            if(dia_actual_zona != -1) {
+                int dia_siguiente_zona = (dia_actual_zona + 1) % 7;
+                strcpy(dia_nombre_siguiente_zona, dias_nombres[dia_siguiente_zona]);
+            }
+            break;
         }
     }
     
-    printf("--- Resultados de Prediccion ---\n\n");
-    for(i = 0; i < numPredicciones; i++) {
-        printf("[%s]\n", predicciones[i].nombre_zona);
+    // Si no hay registros para esta zona, mostrar error
+    if(dia_actual_zona == -1) {
+        printf("No hay registros disponibles para esta zona.\n");
+        return;
+    }
+    
+    for(j = totalRegistros - 1; j >= 0 && registros_zona < 10; j--) {
+        if(strcmp(registros[j].zona.nombre, zonaSeleccionada) == 0) {
+            float peso = (float)(10 - registros_zona) / 10.0;
+            peso_total += peso;
+            
+            sum_co2 += registros[j].zona.co2 * peso;
+            sum_so2 += registros[j].zona.so2 * peso;
+            sum_no2 += registros[j].zona.no2 * peso;
+            sum_pm25 += registros[j].zona.pm25 * peso;
+            registros_zona++;
+        }
+    }
+    
+    if(registros_zona > 0 && peso_total > 0) {
+        float co2_pred = sum_co2 / peso_total;
+        float so2_pred = sum_so2 / peso_total;
+        float no2_pred = sum_no2 / peso_total;
+        float pm25_pred = sum_pm25 / peso_total;
+        
+        int excede_count = 0;
+        if(co2_pred > LIMITE_CO2) excede_count++;
+        if(so2_pred > LIMITE_SO2) excede_count++;
+        if(no2_pred > LIMITE_NO2) excede_count++;
+        if(pm25_pred > LIMITE_PM25) excede_count++;
+        
+        printf("--- Resultados de Prediccion ---\n\n");
+        printf("[%s]\n", zonaSeleccionada);
         printf("------------------------------------------------------------------------\n");
         
         // Mostrar el ultimo dia registrado para esta zona
         for(j = totalRegistros - 1; j >= 0; j--) {
-            if(strcmp(registros[j].zona.nombre, predicciones[i].nombre_zona) == 0) {
+            if(strcmp(registros[j].zona.nombre, zonaSeleccionada) == 0) {
                 char dia_temp[20];
                 sscanf(registros[j].fecha, "%[^,]", dia_temp);
                 printf("  El ultimo dia registrado fue: %s\n", dia_temp);
@@ -825,20 +838,19 @@ void predecirNivelesFuturos() {
         printf("\n");
         
         printf("  CO2 predicho:   %.2f ppm   [Limite: %.0f] %s\n",
-               predicciones[i].co2_pred, LIMITE_CO2,
-               predicciones[i].co2_pred > LIMITE_CO2 ? "[ALERTA, Se prevee aumento prolongado de CO2]" : "[Se prevee CO2 MODERADO-ESTABLE]");
+               co2_pred, LIMITE_CO2,
+               co2_pred > LIMITE_CO2 ? "[ALERTA, Se prevee aumento prolongado de CO2]" : "[Se prevee CO2 MODERADO-ESTABLE]");
         printf("  SO2 predicho:   %.2f ug/m3 [Limite: %.0f] %s\n",
-               predicciones[i].so2_pred, LIMITE_SO2,
-               predicciones[i].so2_pred > LIMITE_SO2 ? "[ALERTA, Se prevee aumento prolongado de SO2]" : "[Se prevee SO2 MODERADO-ESTABLE]");
+               so2_pred, LIMITE_SO2,
+               so2_pred > LIMITE_SO2 ? "[ALERTA, Se prevee aumento prolongado de SO2]" : "[Se prevee SO2 MODERADO-ESTABLE]");
         printf("  NO2 predicho:   %.2f ug/m3 [Limite: %.0f] %s\n",
-               predicciones[i].no2_pred, LIMITE_NO2,
-               predicciones[i].no2_pred > LIMITE_NO2 ? "[ALERTA, Se prevee aumento prolongado de NO2]" : "[Se prevee NO2 MODERADO-ESTABLE]");
+               no2_pred, LIMITE_NO2,
+               no2_pred > LIMITE_NO2 ? "[ALERTA, Se prevee aumento prolongado de NO2]" : "[Se prevee NO2 MODERADO-ESTABLE]");
         printf("  PM2.5 predicho: %.2f ug/m3 [Limite: %.0f] %s\n",
-               predicciones[i].pm25_pred, LIMITE_PM25,
-               predicciones[i].pm25_pred > LIMITE_PM25 ? "[ALERTA, Se prevee aumento prolongado de PM2.5]" : "[Se prevee PM2.5 MODERADO-ESTABLE]");
-        printf("  Nivel de alerta: %d contaminante(s) excede limite\n",
-               predicciones[i].nivel_alerta);
-        printf("  Prediccion para: %s\n\n", predicciones[i].fecha_prediccion);
+               pm25_pred, LIMITE_PM25,
+               pm25_pred > LIMITE_PM25 ? "[ALERTA, Se prevee aumento prolongado de PM2.5]" : "[Se prevee PM2.5 MODERADO-ESTABLE]");
+        printf("  Nivel de alerta: %d contaminante(s) excede limite\n", excede_count);
+        printf("  Prediccion para: Manana (%s)\n\n", dia_nombre_siguiente_zona);
     }
     printf("========================================================================\n");
 }
