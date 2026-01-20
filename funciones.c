@@ -75,8 +75,8 @@ int menu() {
     printf("1)  Gestionar zonas (Agregar/Modificar/Eliminar)\n");
     printf("2)  Ingresar datos de contaminacion actual\n");
     printf("3)  Monitorear niveles de contaminacion actual\n");
-    printf("4)  Calcular promedios historicos (30 dias)\n");
-    printf("5)  Predecir niveles futuros (24 horas)\n");
+    printf("4)  Calcular promedios historicos (30 dias)\n"); //cambiemos esto- a que?, pongamoos Calcular Registros en los ultimos 30 dias, para no poner "historicos"
+    printf("5)  Predecir niveles futuros (24 horas)\n");  //mueve vos verga xdddddddddddd
     printf("6)  Generar alertas preventivas\n");
     printf("7)  Generar recomendaciones de mitigacion\n");
     printf("8)  Comparar niveles entre zonas\n");
@@ -119,7 +119,7 @@ float validarFloat(const char* prompt, float min, float max) {
                 }
             }
             
-            if(valido && sscanf(linea, "%f", &valor) == 1) {
+            if(valido && sscanf(linea, "%f", &valor) == 1) { //sisas
                 if(valor < min || valor > max) {
                     printf("Error: El valor debe estar entre %.2f y %.2f.\n", min, max);
                     valido = 0;
@@ -239,7 +239,7 @@ void agregarZona(DatosZona *zonas, int *numZonas) {    //estudiar
     }
 }
 
-// MOSTRAR ZONAS REGISTRADAS
+// MOSTRAR ZONAS REGISTRADAS (DETALLADO)
 void mostrarZonasRegistradas() {
     DatosZona zonas[MAX_ZONAS];
     int numZonas = 0;
@@ -276,9 +276,42 @@ void mostrarZonasRegistradas() {
     }
 }
 
+// MOSTRAR MENU COMPACTO DE ZONAS
+void mostrarMenuZonas() {
+    DatosZona zonas[MAX_ZONAS];
+    int numZonas = 0;
+    FILE *archivo;
+    int i;
+    
+    archivo = fopen("zonas.dat", "rb");
+    if(archivo == NULL) {
+        printf("No hay zonas registradas.\n");
+        return;
+    }
+    
+    fread(&numZonas, sizeof(int), 1, archivo);
+    if(numZonas == 0) {
+        printf("No hay zonas registradas.\n");
+        fclose(archivo);
+        return;
+    }
+    
+    for(i = 0; i < numZonas; i++) {
+        fread(&zonas[i], sizeof(DatosZona), 1, archivo);
+    }
+    fclose(archivo);
+    
+    printf("\n--- Seleccionar Zona ---\n");
+    printf("========================================================================\n");
+    for(i = 0; i < numZonas; i++) {
+        printf("%d) %s (ID: %d)\n", i + 1, zonas[i].nombre, zonas[i].id);
+    }
+    printf("========================================================================\n");
+}
+
 // GESTIONAR ZONAS
 void gestionarZonas(DatosZona *zonas, int *numZonas) {
-    int opcion;
+    int opcion, retorno;
     
     do {
         printf("\n--- Gestion de Zonas ---\n");
@@ -294,10 +327,16 @@ void gestionarZonas(DatosZona *zonas, int *numZonas) {
                 agregarZona(zonas, numZonas);
                 break;
             case 2:
-                modificarZona(zonas, *numZonas);
+                retorno = modificarZona(zonas, *numZonas);
+                if(retorno == 1) {
+                    opcion = 5;
+                }
                 break;
             case 3:
-                eliminarZona(zonas, numZonas);
+                retorno = eliminarZona(zonas, numZonas);
+                if(retorno == 1) {
+                    opcion = 5;
+                }
                 break;
             case 4:
                 mostrarZonasRegistradas();
@@ -307,34 +346,49 @@ void gestionarZonas(DatosZona *zonas, int *numZonas) {
 }
 
 // MODIFICAR ZONA
-void modificarZona(DatosZona *zonas, int numZonas) {  //estudiar
+int modificarZona(DatosZona *zonas, int numZonas) {  //estudiar
     FILE *archivo;
     int i, idZona, encontrado = 0;
     char nuevoNombre[50];
+    char confirmacion;
     
     if(numZonas == 0) {
         printf("No hay zonas para modificar.\n");
-        return;
+        return 0;
     }
     
-    mostrarZonasRegistradas();
-    idZona = validarEntero("\nIngrese el ID de la zona a modificar: ", 1, numZonas);
+    mostrarMenuZonas();
+    idZona = validarEntero("Selecciona el numero de la zona: ", 1, numZonas);
     
     for(i = 0; i < numZonas; i++) {
         if(zonas[i].id == idZona) {
             encontrado = 1;
-            printf("\nZona actual: %s\n", zonas[i].nombre);
-            validarTextoSoloLetras("Ingrese el nuevo nombre: ", nuevoNombre, 50);
-            strcpy(zonas[i].nombre, nuevoNombre);
             
-            archivo = fopen("zonas.dat", "wb");
-            if(archivo != NULL) {
-                fwrite(&numZonas, sizeof(int), 1, archivo);
-                for(i = 0; i < numZonas; i++) {
-                    fwrite(&zonas[i], sizeof(DatosZona), 1, archivo);
+            printf("\n========================================================================\n");
+            printf("Zona seleccionada: %s (ID: %d)\n", zonas[i].nombre, zonas[i].id);
+            printf("========================================================================\n");
+            printf("Esta seguro que desea modificar esta zona? (s/n): ");
+            scanf("%c", &confirmacion);
+            fflush(stdin);
+            
+            if(confirmacion == 's' || confirmacion == 'S') {
+                printf("\nZona actual: %s\n", zonas[i].nombre);
+                validarTextoSoloLetras("Ingrese el nuevo nombre: ", nuevoNombre, 50);
+                strcpy(zonas[i].nombre, nuevoNombre);
+                
+                archivo = fopen("zonas.dat", "wb");
+                if(archivo != NULL) {
+                    fwrite(&numZonas, sizeof(int), 1, archivo);
+                    for(i = 0; i < numZonas; i++) {
+                        fwrite(&zonas[i], sizeof(DatosZona), 1, archivo); 
+                    }
+                    fclose(archivo);
+                    printf("\n*** Zona modificada exitosamente ***\n");
+                    return 0;
                 }
-                fclose(archivo);
-                printf("\n*** Zona modificada exitosamente ***\n");
+            } else {
+                printf("\n*** Modificacion cancelada - Volviendo al menu principal ***\n");
+                return 1;
             }
             break;
         }
@@ -343,21 +397,23 @@ void modificarZona(DatosZona *zonas, int numZonas) {  //estudiar
     if(!encontrado) {
         printf("Zona no encontrada.\n");
     }
+    return 0;
 }
 
 // ELIMINAR ZONA
-void eliminarZona(DatosZona *zonas, int *numZonas) {  //mejorar explidadion
+int eliminarZona(DatosZona *zonas, int *numZonas) {  
     FILE *archivo;
-    int i, j, idZona, encontrado = 0;
+    int i, j, opcionZona, encontrado = 0;
     char confirmacion;
     
     if(*numZonas == 0) {
         printf("No hay zonas para eliminar.\n");
-        return;
+        return 0;
     }
     
-    mostrarZonasRegistradas();
-    idZona = validarEntero("\nIngrese el ID de la zona a eliminar: ", 1, *numZonas);
+    mostrarMenuZonas();
+    opcionZona = validarEntero("Selecciona el numero de la zona: ", 1, *numZonas);
+    int idZona = opcionZona;  // El ID es la posición
     
     // Buscar por posición directa (ID es la posición + 1)
     if(idZona > 0 && idZona <= *numZonas) {
@@ -365,7 +421,7 @@ void eliminarZona(DatosZona *zonas, int *numZonas) {  //mejorar explidadion
         encontrado = 1;
         
         printf("\n========================================================================\n");
-        printf("ADVERTENCIA: Zona a eliminar: %s\n", zonas[i].nombre);
+        printf("Zona seleccionada: %s (ID: %d)\n", zonas[i].nombre, zonas[i].id);
         printf("========================================================================\n");
         printf("Esta seguro que desea eliminar esta zona? (s/n): ");
         scanf("%c", &confirmacion);
@@ -381,7 +437,7 @@ void eliminarZona(DatosZona *zonas, int *numZonas) {  //mejorar explidadion
             (*numZonas)--;
             
             // REASIGNAR IDS SECUENCIALMENTE
-            for(j = 0; j < *numZonas; j++) {
+            for(j = 0; j < *numZonas; j++) { //e
                 zonas[j].id = j + 1;
             }
             
@@ -393,17 +449,18 @@ void eliminarZona(DatosZona *zonas, int *numZonas) {  //mejorar explidadion
                 }
                 fclose(archivo);
                 printf("\n*** Zona eliminada exitosamente ***\n");
+                return 0;
             }
-        } else if(confirmacion == 'n' || confirmacion == 'N') {
-            printf("\n*** Eliminacion cancelada ***\n");
         } else {
-            printf("\n*** Opcion invalida. Eliminacion cancelada ***\n");
+            printf("\n*** Eliminacion cancelada - Volviendo al menu principal ***\n");
+            return 1;
         }
     }
     
     if(!encontrado) {
         printf("Zona no encontrada.\n");
     }
+    return 0;
 }
 
 // INGRESAR DATOS DE CONTAMINACION
